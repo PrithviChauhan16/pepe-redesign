@@ -1,3 +1,14 @@
+// --- 1. Initialize Supabase ---
+// Replace these placeholders with your actual Project URL and anon key
+const supabaseUrl = 'https://cmxhngjykgoqblobyefh.supabase.co/rest/v1/'; 
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNteGhuZ2p5a2dvcWJsb2J5ZWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNDAwNTMsImV4cCI6MjEwNDgxNjA1M30.puMa5Ty4NTWxzTM9gnSHzqAVMzgMhgAfTPu-8sIVgPM';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Global Variables
+let products = [];
+let cart = JSON.parse(localStorage.getItem('pepekun_cart')) || [];
+let currentUser = null; // Will be used if you add customer login later
+
 // --- Mobile Menu Toggle ---
 function toggleMobileMenu() {
     const menu = document.getElementById('mobile-menu');
@@ -5,82 +16,45 @@ function toggleMobileMenu() {
     menu.classList.toggle('flex');
 }
 
-// --- E-Commerce Logic ---
-// 1. Pull the products saved by the Admin Panel
-let adminProducts = JSON.parse(localStorage.getItem('pepekun_admin_products')) || [];
-
-// 2. Format admin products so they don't break your Quick-View Modal (which requires galleries/descriptions)
-let formattedAdminProducts = adminProducts.map(p => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    category: p.category,
-    tag: p.tag,
-    image: p.image,
-    heightClass: p.heightClass || "h-[300px]",
-    description: "A beautifully crafted, ultra-soft companion from Pepe Kun.", // Default description
-    specs: ["Premium plush material", "Perfect for gifting", "Cloud tag included"], // Default specs
-    gallery: [p.image, p.image, p.image, p.image] // Duplicates the main image 4 times so the scroll gallery works
-}));
-
-// 3. Fallback to default products if the Admin Panel is totally empty
-let products = formattedAdminProducts.length > 0 ? formattedAdminProducts : [
-    { 
-        id: 1, 
-        name: "Classic Panda", 
-        price: 1299, 
-        category: "Signature Collection", 
-        tag: "Best Seller", 
-        image: "https://images.unsplash.com/photo-1589487391730-58f20eb2c308?q=80&w=600", 
-        heightClass: "h-[300px] md:h-[400px]",
-        description: "The Bamboo Panda is crafted with ultra-soft, eco-friendly plush materials.",
-        specs: ["Height: 30cm", "Material: Recycled Polyester", "Filling: Premium Cloud PP Cotton", "Care: Surface wash"],
-        gallery: [
-            "https://images.unsplash.com/photo-1589487391730-58f20eb2c308?q=80&w=600",
-            "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?q=80&w=600",
-            "https://images.unsplash.com/photo-1572986427306-03c734898398?q=80&w=600",
-            "https://images.unsplash.com/photo-1558285549-2a05f32b1ba6?q=80&w=600"
-        ]
-    },
-    { 
-        id: 2, 
-        name: "Sleepy Cat", 
-        price: 1099, 
-        category: "Signature Collection", 
-        tag: "New Arrival", 
-        image: "https://images.unsplash.com/photo-1525253013412-55c1a69a5738?q=80&w=600", 
-        heightClass: "h-[250px]",
-        description: "Designed for late-night coders and anime bingers.",
-        specs: ["Height: 25cm", "Material: Minky Plush Fabric", "Filling: Glass beads & Cotton", "Care: Machine wash cold"],
-        gallery: [
-            "https://images.unsplash.com/photo-1525253013412-55c1a69a5738?q=80&w=600",
-            "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=600",
-            "https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?q=80&w=600",
-            "https://images.unsplash.com/photo-1558285549-2a05f32b1ba6?q=80&w=600"
-        ]
-    },
-    { 
-        id: 3, 
-        name: "Baby Dragon", 
-        price: 1499, 
-        category: "Fantasy Series", 
-        tag: "Limited Edition", 
-        image: "https://images.unsplash.com/photo-1596522354195-e84ae3c98731?q=80&w=600", 
-        heightClass: "h-[350px]",
-        description: "Bring fantasy to life. Features iridescent winged accents.",
-        specs: ["Height: 35cm", "Material: Velvet", "Filling: Foam", "Care: Spot clean"],
-        gallery: [
-            "https://images.unsplash.com/photo-1596522354195-e84ae3c98731?q=80&w=600",
-            "https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?q=80&w=600",
-            "https://images.unsplash.com/photo-1572986427306-03c734898398?q=80&w=600",
-            "https://images.unsplash.com/photo-1558285549-2a05f32b1ba6?q=80&w=600"
-        ]
+// --- Initial Data Load (Replaces your hardcoded products) ---
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Fetch products directly from your Supabase 'products' table
+    const { data: dbProducts, error } = await supabase.from('products').select('*');
+    
+    if (error) {
+        console.error("Error fetching products:", error);
+    } else if (dbProducts && dbProducts.length > 0) {
+        products = dbProducts;
+    } else {
+        console.log("No products found in the database.");
     }
-];
-function updateCart() { 
-    document.getElementById('cart-count').innerText = cart.length; 
-    document.getElementById('cart-count-mobile').innerText = cart.length; 
+    
+    // 2. Update cart numbers on load
+    updateCartUI();
+});
+
+// --- E-Commerce Logic ---
+async function updateCart() { 
+    updateCartUI();
+    
+    // Always save locally for guests
     localStorage.setItem('pepekun_cart', JSON.stringify(cart));
+
+    // If a user is logged in, sync their cart to the database
+    if (currentUser) {
+        const { error } = await supabase
+            .from('carts')
+            .upsert({ user_id: currentUser.id, items: cart });
+            
+        if (error) console.error("Error saving cart to database:", error);
+    }
+}
+
+function updateCartUI() {
+    const cartCountEl = document.getElementById('cart-count');
+    const cartCountMobileEl = document.getElementById('cart-count-mobile');
+    if (cartCountEl) cartCountEl.innerText = cart.length; 
+    if (cartCountMobileEl) cartCountMobileEl.innerText = cart.length; 
 }
 
 function addToCart(productId) {
@@ -173,14 +147,24 @@ function openProductModal(productId) {
     document.getElementById('modal-title').innerText = product.name;
     document.getElementById('modal-price').innerText = `₹${product.price}`;
     document.getElementById('modal-category').innerText = product.category;
-    document.getElementById('modal-desc').innerText = product.description;
+    document.getElementById('modal-desc').innerText = product.description || "A beautifully crafted companion from Pepe Kun.";
 
     const specsList = document.getElementById('modal-specs');
-    specsList.innerHTML = product.specs.map(spec => `<li>• ${spec}</li>`).join('');
+    if (product.specs && Array.isArray(product.specs)) {
+        specsList.innerHTML = product.specs.map(spec => `<li>• ${spec}</li>`).join('');
+    } else {
+        specsList.innerHTML = `<li>• Premium plush material</li>`;
+    }
 
-    document.getElementById('modal-main-img').src = product.gallery[0];
+    document.getElementById('modal-main-img').src = product.image; // Use main image if gallery is empty
     const galleryContainer = document.getElementById('modal-gallery');
-    galleryContainer.innerHTML = product.gallery.map(imgSrc => `
+    
+    // Safely handle the gallery if you haven't uploaded multiple images yet
+    const galleryImages = (product.gallery && product.gallery.length > 0) 
+        ? product.gallery 
+        : [product.image, product.image, product.image]; 
+
+    galleryContainer.innerHTML = galleryImages.map(imgSrc => `
         <img src="${imgSrc}" 
              onclick="document.getElementById('modal-main-img').src='${imgSrc}'"
              class="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border-2 border-transparent hover:border-pink-500 cursor-pointer snap-start flex-shrink-0 transition-colors">
