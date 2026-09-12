@@ -113,19 +113,41 @@
             <!-- ORDERS TAB -->
             <div id="tab-orders" class="tab-content hidden">
                 <h1 class="text-3xl font-semibold mb-8">Recent Orders</h1>
-                <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-                    <div class="text-4xl mb-4">📦</div>
-                    <p class="text-gray-500 font-medium">No pending orders to process.</p>
-                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead>
+            <tr class="bg-gray-50 border-b border-gray-100 text-sm text-gray-500">
+                <th class="p-4 font-medium">Date</th>
+                <th class="p-4 font-medium">Total</th>
+                <th class="p-4 font-medium">Status</th>
+                <th class="p-4 font-medium">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="admin-orders-table" class="text-sm">
+            <!-- Supabase orders inject here -->
+        </tbody>
+    </table>
+</div>
             </div>
 
             <!-- MESSAGES TAB -->
             <div id="tab-messages" class="tab-content hidden">
                 <h1 class="text-3xl font-semibold mb-8">Customer Enquiries</h1>
-                <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-                    <div class="text-4xl mb-4">✉️</div>
-                    <p class="text-gray-500 font-medium">Inbox is empty. No new messages.</p>
-                </div>
+               <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead>
+            <tr class="bg-gray-50 border-b border-gray-100 text-sm text-gray-500">
+                <th class="p-4 font-medium">Date</th>
+                <th class="p-4 font-medium">Name</th>
+                <th class="p-4 font-medium">Email</th>
+                <th class="p-4 font-medium">Message</th>
+            </tr>
+        </thead>
+        <tbody id="admin-messages-table" class="text-sm">
+            <!-- Supabase enquiries inject here -->
+        </tbody>
+    </table>
+</div>
             </div>
 
         </div>
