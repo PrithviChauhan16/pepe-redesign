@@ -13,6 +13,7 @@
             }
         }
     </script>
+    
     <style>
         body { 
             background-color: #fff3ff;
@@ -25,6 +26,7 @@
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
         .animate-float { animation: float 5s ease-in-out infinite; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="text-brand-900 antialiased selection:bg-pink-200">
 
@@ -61,72 +63,115 @@
     </main>
     
     <script>
-        // Pull cart data from browser storage
-        let cart = JSON.parse(localStorage.getItem('pepekun_cart')) || [];
-        
-        function renderCart() {
-            const container = document.getElementById('cart-container');
-            
-            // Empty State
-            if (cart.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-16">
-                        <div class="text-6xl mb-4">☁️</div>
-                        <h3 class="text-xl font-medium mb-2">Your cart is empty</h3>
-                        <p class="text-gray-500">Time to find a soft companion!</p>
-                    </div>`;
-                updateTotals(0);
-                return;
-            }
-            
-            // Populated State
-            let total = 0;
-            container.innerHTML = cart.map((item, index) => {
-                total += item.price;
-                return `
-                    <div class="flex items-center gap-4 bg-white/90 p-4 rounded-2xl shadow-sm border border-gray-100 relative group transition-all hover:shadow-md">
-                        <img src="${item.image}" class="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border border-gray-100">
-                        <div class="flex-1">
-                            <h3 class="font-medium text-lg">${item.name}</h3>
-                            <p class="text-gray-500 text-sm mb-1">${item.category}</p>
-                            <span class="font-semibold text-pink-500 block md:hidden">₹${item.price}</span>
-                        </div>
-                        <div class="font-semibold text-lg hidden md:block w-24 text-right">₹${item.price}</div>
-                        <button onclick="removeItem(${index})" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors border border-gray-100">
-                            ✕
-                        </button>
-                    </div>
-                `;
-            }).join('');
-            
-            updateTotals(total);
-        }
-        
-        function updateTotals(totalValue) {
-            document.getElementById('nav-total').innerText = `₹${totalValue}`;
-            document.getElementById('bottom-total').innerText = `₹${totalValue}`;
-        }
-        
-        function removeItem(index) {
-            // Remove the specific item from the array based on its position
-            cart.splice(index, 1);
-            // Save the updated array back to storage
-            localStorage.setItem('pepekun_cart', JSON.stringify(cart));
-            // Re-draw the screen
-            renderCart();
-        }
-        
-        function processCheckout() {
-            if(cart.length === 0) {
-                alert('Add a plushie to your cart first!');
-                return;
-            }
-            // Hook up PhonePe integration here
-            alert('Redirecting to secure payment gateway...');
-        }
-        
-        // Initialize page build
-        renderCart();
+       // --- 1. Initialize Supabase ---
+const supabaseUrl = 'https://cmxhngjykgoqblobyefh.supabase.co'; 
+const supabaseKey = 'YOUR_ANON_KEY'; // Replace with your actual anon key
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Pull cart data from browser storage
+let cart = JSON.parse(localStorage.getItem('pepekun_cart')) || [];
+let currentUser = null;
+
+// Check if a user is logged in when the cart page loads
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    currentUser = user;
+    renderCart();
+});
+
+// Sync changes to Supabase (if logged in) and LocalStorage
+async function syncCart() {
+    localStorage.setItem('pepekun_cart', JSON.stringify(cart));
+    if (currentUser) {
+        await supabase.from('carts').upsert({ user_id: currentUser.id, items: cart });
+    }
+    renderCart();
+}
+
+function renderCart() {
+    const container = document.getElementById('cart-container');
+    
+    // Empty State
+    if (cart.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-16">
+                <div class="text-6xl mb-4">☁️</div>
+                <h3 class="text-xl font-medium mb-2">Your cart is empty</h3>
+                <p class="text-gray-500">Time to find a soft companion!</p>
+            </div>`;
+        updateTotals(0);
+        return;
+    }
+    
+    // Populated State
+    let total = 0;
+    container.innerHTML = cart.map((item, index) => {
+        total += item.price;
+        return `
+            <div class="flex items-center gap-4 bg-white/90 p-4 rounded-2xl shadow-sm border border-gray-100 relative group transition-all hover:shadow-md">
+                <img src="${item.image}" class="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border border-gray-100">
+                <div class="flex-1">
+                    <h3 class="font-medium text-lg">${item.name}</h3>
+                    <p class="text-gray-500 text-sm mb-1">${item.category}</p>
+                    <span class="font-semibold text-pink-500 block md:hidden">₹${item.price}</span>
+                </div>
+                <div class="font-semibold text-lg hidden md:block w-24 text-right">₹${item.price}</div>
+                <button onclick="removeItem(${index})" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors border border-gray-100">
+                    ✕
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    updateTotals(total);
+}
+
+function updateTotals(totalValue) {
+    document.getElementById('nav-total').innerText = `₹${totalValue}`;
+    document.getElementById('bottom-total').innerText = `₹${totalValue}`;
+}
+
+function removeItem(index) {
+    // Remove the item and sync the updated cart to the database
+    cart.splice(index, 1);
+    syncCart();
+}
+
+// --- Checkout Logic Pushes to Supabase ---
+async function processCheckout() {
+    if(cart.length === 0) {
+        alert('Add a plushie to your cart first!');
+        return;
+    }
+
+    if(!currentUser) {
+        alert('Please log in to place an order.');
+        // Optional: window.location.href = 'login.html';
+        return;
+    }
+
+    // Calculate total price
+    const orderTotal = cart.reduce((total, item) => total + item.price, 0);
+
+    // Save order to database
+    const { error } = await supabase
+        .from('orders')
+        .insert([{
+            user_id: currentUser.id,
+            items: cart,
+            order_total: orderTotal,
+            status: 'pending',
+            shipping_details: { notes: "Customer needs to enter address in next UI step" } 
+        }]);
+
+    if (error) {
+        alert("Checkout failed: " + error.message);
+    } else {
+        alert("Order placed securely! Check your Admin Panel to see it.");
+        cart = []; // Empty the cart
+        syncCart(); // Sync the empty cart to the database
+    }
+}
     </script>
 </body>
 </html>
