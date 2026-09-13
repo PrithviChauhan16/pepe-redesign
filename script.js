@@ -1,6 +1,6 @@
 // --- 1. Initialize Supabase ---
 // Replace these placeholders with your actual Project URL and anon key
-const supabaseUrl = 'https://cmxhngjykgoqblobyefh.supabase.co/rest/v1/'; 
+const supabaseUrl = 'https://cmxhngjykgoqblobyefh.supabase.co'; 
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNteGhuZ2p5a2dvcWJsb2J5ZWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNDAwNTMsImV4cCI6MjEwNDgxNjA1M30.puMa5Ty4NTWxzTM9gnSHzqAVMzgMhgAfTPu-8sIVgPM';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
