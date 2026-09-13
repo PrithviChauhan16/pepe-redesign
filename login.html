@@ -63,77 +63,74 @@
 
     </div>
 
-    <script>
-// --- 1. Initialize Supabase ---
-const supabaseUrl = 'https://cmxhngjykgoqblobyefh.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNteGhuZ2p5a2dvcWJsb2J5ZWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNDAwNTMsImV4cCI6MjEwNDgxNjA1M30.puMa5Ty4NTWxzTM9gnSHzqAVMzgMhgAfTPu-8sIVgPM'; // Replace with your actual anon key
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+<script>
+    // --- Initialize Supabase ONCE ---
+    const supabaseUrl = 'https://cmxhngjykgoqblobyefh.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; 
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Tab Toggle UI Function
-function toggleForm(type) {
-    const loginForm = document.getElementById('form-login');
-    const signupForm = document.getElementById('form-signup');
-    const tabLogin = document.getElementById('tab-login');
-    const tabSignup = document.getElementById('tab-signup');
+    // Tab Toggle UI Function
+    function toggleForm(type) {
+        const loginForm = document.getElementById('form-login');
+        const signupForm = document.getElementById('form-signup');
+        const tabLogin = document.getElementById('tab-login');
+        const tabSignup = document.getElementById('tab-signup');
 
-    if (type === 'login') {
-        loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
-        tabLogin.classList.add('bg-white', 'shadow', 'text-gray-900'); tabLogin.classList.remove('text-gray-500');
-        tabSignup.classList.remove('bg-white', 'shadow', 'text-gray-900'); tabSignup.classList.add('text-gray-500');
-    } else {
-        signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
-        tabSignup.classList.add('bg-white', 'shadow', 'text-gray-900'); tabSignup.classList.remove('text-gray-500');
-        tabLogin.classList.remove('bg-white', 'shadow', 'text-gray-900'); tabLogin.classList.add('text-gray-500');
-    }
-}
-
-// --- 2. Supabase Login Logic ---
-async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-    });
-
-    if (error) {
-        alert("Login failed: " + error.message);
-        return;
+        if (type === 'login') {
+            loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
+            tabLogin.classList.add('bg-white', 'shadow', 'text-gray-900'); tabLogin.classList.remove('text-gray-500');
+            tabSignup.classList.remove('bg-white', 'shadow', 'text-gray-900'); tabSignup.classList.add('text-gray-500');
+        } else {
+            signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+            tabSignup.classList.add('bg-white', 'shadow', 'text-gray-900'); tabSignup.classList.remove('text-gray-500');
+            tabLogin.classList.remove('bg-white', 'shadow', 'text-gray-900'); tabLogin.classList.add('text-gray-500');
+        }
     }
 
-    // Check if you are logging in with your admin credentials
-    if (email === 'admin@pepekun.com') {
-        window.location.href = 'admin.html';
-    } else {
-        window.location.href = 'index.html';
+    // --- Supabase Login Logic ---
+    async function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            alert("Login failed: " + error.message);
+            return;
+        }
+
+        if (email === 'admin@pepekun.com') {
+            window.location.href = 'admin.html';
+        } else {
+            window.location.href = 'index.html';
+        }
     }
-}
 
-// --- 3. Supabase Sign Up Logic ---
-document.getElementById('form-signup').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const inputs = this.querySelectorAll('input');
-    const fullName = inputs[0].value;
-    const email = inputs[1].value;
-    const password = inputs[2].value;
+    // --- Supabase Sign Up Logic ---
+    document.getElementById('form-signup').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const inputs = this.querySelectorAll('input');
+        const fullName = inputs[0].value;
+        const email = inputs[1].value;
+        const password = inputs[2].value;
 
-    const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            data: { full_name: fullName }
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: { data: { full_name: fullName } }
+        });
+
+        if (error) {
+            alert("Sign up failed: " + error.message);
+        } else {
+            alert("Account created successfully! You are now logged in.");
+            window.location.href = 'index.html';
         }
     });
-
-    if (error) {
-        alert("Sign up failed: " + error.message);
-    } else {
-        alert("Account created successfully! You are now logged in.");
-        window.location.href = 'index.html';
-    }
-});
-    </script>
+</script>
 </body>
 </html>
